@@ -1,0 +1,282 @@
+:root {
+  color: #25211b;
+  background: #f7f4ef;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 360px;
+  min-height: 560px;
+  background: #f7f4ef;
+}
+
+button {
+  font: inherit;
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.workspace {
+  display: grid;
+  grid-template-rows: 58px minmax(0, 1fr);
+  min-width: 0;
+}
+
+.toolbar {
+  position: sticky;
+  z-index: 5;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 18px;
+  border-bottom: 1px solid #dfd6ca;
+  background: #fbfaf7;
+}
+
+#current-time {
+  color: #4c463e;
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.cursor-position {
+  color: #766e64;
+  font-size: 12px;
+}
+
+.editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+}
+
+#editor {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  background: #fffefa;
+}
+
+#editor .cm-editor {
+  height: 100%;
+  color: #25211b;
+  font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+#editor .cm-scroller {
+  font-family: inherit;
+}
+
+#editor .cm-content {
+  min-height: 100%;
+  padding: 34px 38px;
+  caret-color: #2f5f62;
+}
+
+#editor .cm-line {
+  padding: 0;
+}
+
+#editor .cm-focused {
+  outline: 0;
+}
+
+#editor .cm-selectionBackground,
+#editor .cm-focused .cm-selectionBackground,
+#editor .cm-content ::selection {
+  background: #c9dcda;
+}
+
+#editor .cm-cursor {
+  border-left-color: #2f5f62;
+}
+
+#editor .cm-activeLine {
+  background: transparent;
+}
+
+#editor .cm-markdown-syntax-hidden {
+  display: none;
+}
+
+#editor .cm-live-heading-1 {
+  padding: 4px 0 12px;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-size: 28px;
+  font-weight: 760;
+  line-height: 1.25;
+}
+
+#editor .cm-live-heading-2 {
+  padding: 12px 0 8px;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-size: 22px;
+  font-weight: 730;
+  line-height: 1.3;
+}
+
+#editor .cm-live-heading-3 {
+  padding: 10px 0 6px;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+#editor .cm-live-heading-4,
+#editor .cm-live-heading-5,
+#editor .cm-live-heading-6 {
+  padding: 8px 0 4px;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+#editor .cm-live-bullet {
+  display: inline-block;
+  width: 1.4ch;
+  color: #b45f4d;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+#editor .cm-live-checkbox {
+  display: inline-grid;
+  width: 1.2em;
+  height: 1.2em;
+  margin-right: 0.55em;
+  place-items: center;
+  transform: translateY(0.18em);
+  border: 1px solid #b9aea1;
+  border-radius: 4px;
+  color: #fffefa;
+  background: #fffefa;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-size: 0.86em;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#editor .cm-live-checkbox.is-checked {
+  border-color: #2f5f62;
+  background: #2f5f62;
+}
+
+#editor .cm-live-task-checked {
+  color: #9a9389;
+}
+
+#editor .cm-live-strong {
+  font-weight: 760;
+}
+
+#editor .cm-live-code {
+  border: 1px solid #e1d6c8;
+  border-radius: 5px;
+  padding: 1px 5px;
+  background: #f2ece2;
+  color: #244f52;
+}
+
+#editor .cm-live-codeblock {
+  position: relative;
+  padding: 0 14px;
+  background: #f2ece2;
+  background-clip: padding-box;
+}
+
+#editor .cm-live-codeblock-first {
+  padding-top: 14px;
+  padding-right: 74px;
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+}
+
+#editor .cm-live-codeblock-last {
+  padding-bottom: 14px;
+  border-bottom-right-radius: 7px;
+  border-bottom-left-radius: 7px;
+}
+
+#editor .cm-live-code-language {
+  position: absolute;
+  top: 0.35em;
+  right: 12px;
+  z-index: 1;
+  color: #766e64;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 650;
+  letter-spacing: 0;
+  pointer-events: none;
+  text-transform: lowercase;
+}
+
+#editor .cm-live-blockquote {
+  position: relative;
+  color: #5f675f;
+  font-style: italic;
+}
+
+#editor .cm-live-blockquote::before {
+  position: absolute;
+  left: -17px;
+  top: 0.16em;
+  bottom: 0.16em;
+  width: 3px;
+  border-radius: 999px;
+  background: #b45f4d;
+  content: "";
+}
+
+@media (max-width: 900px) {
+  body {
+    min-width: 0;
+  }
+
+  .shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .editor-layout {
+    grid-template-columns: 1fr;
+  }
+}
