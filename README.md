@@ -1,5 +1,7 @@
 # Lithe
 
+Capture the thought.
+
 Lithe is a light, local-first Markdown text editor.
 
 ## Principles
