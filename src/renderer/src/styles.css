@@ -253,13 +253,14 @@ button {
 
 #editor .cm-live-blockquote {
   position: relative;
+  padding-left: 16px;
   color: #5f675f;
   font-style: italic;
 }
 
 #editor .cm-live-blockquote::before {
   position: absolute;
-  left: -17px;
+  left: 0;
   top: 0.16em;
   bottom: 0.16em;
   width: 3px;

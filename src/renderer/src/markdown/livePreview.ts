@@ -1,0 +1,194 @@
+import { RangeSetBuilder } from '@codemirror/state';
+import { Decoration, type DecorationSet, EditorView, ViewPlugin, type ViewUpdate } from '@codemirror/view';
+import { addInlinePreviewDecorations, lineIsOnlyInlineCode } from './inlinePreview';
+import {
+  collectFencedCodeBlocks,
+  getFencedCodeBlockForLine,
+  getFencedCodeLineDecoration,
+  getPreviewCodeLineDecoration,
+  isActiveFencedCodeBlock
+} from './fencedCode';
+import { bulletMarker, headingClasses, hiddenSyntax, liveCheckedTask } from './decorations';
+import { CheckboxWidget, CodeLanguageWidget } from './widgets';
+import { lineContainsSelection, lineIntersectsSelection, rangeContainsSelection } from './selection';
+import type { PendingDecoration } from './types';
+
+function moveSingleInlineCodeClickToLineEnd(view: EditorView, event: MouseEvent): boolean {
+  const position = view.posAtCoords({ x: event.clientX, y: event.clientY });
+  if (position === null) return false;
+
+  const line = view.state.doc.lineAt(position);
+  if (!lineIsOnlyInlineCode(line.text)) return false;
+
+  const lineEndCoords = view.coordsAtPos(line.to);
+  if (!lineEndCoords || event.clientX < lineEndCoords.left) return false;
+
+  event.preventDefault();
+  view.dispatch({
+    selection: { anchor: line.to },
+    scrollIntoView: true
+  });
+  view.focus();
+
+  return true;
+}
+
+function buildLivePreviewDecorations(view: EditorView, hoverLine: number | null): DecorationSet {
+  const builder = new RangeSetBuilder<Decoration>();
+  const pending: PendingDecoration[] = [];
+  const codeBlocks = collectFencedCodeBlocks(view.state.doc);
+
+  for (const range of view.visibleRanges) {
+    for (let pos = range.from; pos <= range.to;) {
+      const line = view.state.doc.lineAt(pos);
+      const lineText = line.text;
+      const isInteractive = line.number === hoverLine || lineIntersectsSelection(view, line.from, line.to);
+      const codeBlock = getFencedCodeBlockForLine(codeBlocks, line.number);
+      const headingMatch = /^(#{1,6})\s+/.exec(lineText);
+      const taskMatch = /^(\s*)([-*+])\s+\[([ xX])\]\s+/.exec(lineText);
+      const listMatch = /^(\s*)([-*+])\s+/.exec(lineText);
+      const blockquoteMatch = /^(\s*)>\s?/.exec(lineText);
+
+      if (codeBlock) {
+        const activeCodeBlock = isActiveFencedCodeBlock(view, codeBlock);
+        const fenceLine = line.number === codeBlock.startLine || line.number === codeBlock.endLine;
+
+        if (activeCodeBlock || !fenceLine) {
+          const lineDecoration = activeCodeBlock
+            ? getFencedCodeLineDecoration(codeBlock, line.number)
+            : getPreviewCodeLineDecoration(codeBlock, line.number);
+
+          pending.push({ from: line.from, to: line.from, decoration: lineDecoration });
+        }
+
+        if (!activeCodeBlock && fenceLine) {
+          pending.push({ from: line.from, to: line.to, decoration: hiddenSyntax });
+        }
+
+        if (line.number === (activeCodeBlock ? codeBlock.startLine : codeBlock.startLine + 1)) {
+          pending.push({
+            from: line.from,
+            to: line.from,
+            decoration: Decoration.widget({
+              widget: new CodeLanguageWidget(codeBlock.language),
+              side: 1
+            })
+          });
+        }
+
+        pos = line.to + 1;
+        continue;
+      }
+
+      if (headingMatch) {
+        const headingLevel = Math.min(headingMatch[1].length, headingClasses.length);
+        pending.push({
+          from: line.from,
+          to: line.from,
+          decoration: Decoration.line({ class: headingClasses[headingLevel - 1] })
+        });
+
+        if (!isInteractive) {
+          pending.push({ from: line.from, to: line.from + headingMatch[0].length, decoration: hiddenSyntax });
+        }
+      }
+
+      if (taskMatch) {
+        const markerStart = line.from + taskMatch[1].length;
+        const taskEnd = line.from + taskMatch[0].length;
+        const checkPosition = markerStart + taskMatch[2].length + 2;
+        const isChecked = taskMatch[3].toLowerCase() === 'x';
+        const editingTaskMarker = rangeContainsSelection(view, markerStart, taskEnd);
+
+        if (!editingTaskMarker) {
+          pending.push({
+            from: markerStart,
+            to: taskEnd,
+            decoration: Decoration.replace({ widget: new CheckboxWidget(isChecked, checkPosition) })
+          });
+        }
+
+        if (isChecked) {
+          pending.push({ from: taskEnd, to: line.to, decoration: liveCheckedTask });
+        }
+      } else if (listMatch) {
+        const markerStart = line.from + listMatch[1].length;
+        const markerEnd = line.from + listMatch[0].length;
+
+        if (!rangeContainsSelection(view, markerStart, markerEnd)) {
+          pending.push({ from: markerStart, to: markerEnd, decoration: bulletMarker });
+        }
+      }
+
+      if (blockquoteMatch) {
+        const markerStart = line.from + blockquoteMatch[1].length;
+        const markerEnd = line.from + blockquoteMatch[0].length;
+
+        pending.push({
+          from: line.from,
+          to: line.from,
+          decoration: Decoration.line({ class: 'cm-live-blockquote' })
+        });
+
+        if (!lineContainsSelection(view, line.from, line.to)) {
+          pending.push({ from: markerStart, to: markerEnd, decoration: hiddenSyntax });
+        }
+      }
+
+      addInlinePreviewDecorations(view, pending, line.from, lineText);
+
+      pos = line.to + 1;
+    }
+  }
+
+  pending
+    .sort((a, b) => a.from - b.from || a.to - b.to)
+    .forEach((item) => {
+      builder.add(item.from, item.to, item.decoration);
+    });
+
+  return builder.finish();
+}
+
+export const liveMarkdownPreview = ViewPlugin.fromClass(
+  class {
+    decorations: DecorationSet;
+    hoverLine: number | null = null;
+
+    constructor(view: EditorView) {
+      this.decorations = buildLivePreviewDecorations(view, this.hoverLine);
+    }
+
+    update(update: ViewUpdate): void {
+      if (update.docChanged || update.selectionSet || update.viewportChanged) {
+        this.decorations = buildLivePreviewDecorations(update.view, this.hoverLine);
+        update.view.requestMeasure();
+      }
+    }
+
+    setHoverLine(view: EditorView, lineNumber: number | null): void {
+      if (this.hoverLine === lineNumber) return;
+      this.hoverLine = lineNumber;
+      this.decorations = buildLivePreviewDecorations(view, this.hoverLine);
+      view.requestMeasure();
+    }
+  },
+  {
+    decorations: (plugin) => plugin.decorations,
+    eventHandlers: {
+      mousedown(event, view) {
+        return moveSingleInlineCodeClickToLineEnd(view, event);
+      },
+      mousemove(event, view) {
+        const plugin = view.plugin(liveMarkdownPreview);
+        if (!plugin) return;
+
+        const position = view.posAtCoords({ x: event.clientX, y: event.clientY });
+        plugin.setHoverLine(view, position === null ? null : view.state.doc.lineAt(position).number);
+      },
+      mouseleave(_, view) {
+        view.plugin(liveMarkdownPreview)?.setHoverLine(view, null);
+      }
+    }
+  }
+);
