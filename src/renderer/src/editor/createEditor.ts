@@ -5,7 +5,7 @@ import { syntaxHighlighting } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import { EditorView, keymap } from '@codemirror/view';
 import { litheHighlightStyle } from './highlighting';
-import { handleBacktickInput } from './inputHandlers';
+import { handleBacktickInput, handlePairedSymbolInput } from './inputHandlers';
 import { continueListItem, stableVerticalMovement } from './keymaps';
 import { liveMarkdownPreview } from '../markdown/livePreview';
 
@@ -26,6 +26,7 @@ export function createEditor(options: CreateEditorOptions): EditorView {
         markdown({ codeLanguages: languages }),
         syntaxHighlighting(litheHighlightStyle, { fallback: true }),
         handleBacktickInput,
+        handlePairedSymbolInput,
         liveMarkdownPreview,
         EditorView.lineWrapping,
         stableVerticalMovement,

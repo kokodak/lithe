@@ -206,12 +206,61 @@ button {
   font-weight: 760;
 }
 
+#editor .cm-live-emphasis {
+  font-style: italic;
+}
+
+#editor .cm-live-strikethrough {
+  color: #82786e;
+  text-decoration: line-through;
+}
+
+#editor .cm-live-link {
+  color: #186a75;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+  cursor: pointer;
+}
+
 #editor .cm-live-code {
   border: 1px solid #e1d6c8;
   border-radius: 5px;
   padding: 1px 5px;
   background: #f2ece2;
   color: #244f52;
+}
+
+#editor .cm-live-numbered-marker {
+  display: inline-block;
+  min-width: 2.4ch;
+  color: #6f7f2f;
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+#editor .cm-live-horizontal-rule {
+  display: block;
+  height: 1px;
+  margin: 0.78em 0;
+  background: #dfd6ca;
+}
+
+#editor .cm-live-image {
+  display: inline-block;
+  max-width: min(100%, 720px);
+  margin: 0.45em 0;
+  vertical-align: top;
+}
+
+#editor .cm-live-image img {
+  display: block;
+  max-width: 100%;
+  max-height: 360px;
+  border: 1px solid #e1d6c8;
+  border-radius: 7px;
+  background: #f7f4ef;
+  object-fit: contain;
 }
 
 #editor .cm-live-codeblock {

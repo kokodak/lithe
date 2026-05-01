@@ -9,7 +9,7 @@ import {
   isActiveFencedCodeBlock
 } from './fencedCode';
 import { bulletMarker, headingClasses, hiddenSyntax, liveCheckedTask } from './decorations';
-import { CheckboxWidget, CodeLanguageWidget } from './widgets';
+import { CheckboxWidget, CodeLanguageWidget, HorizontalRuleWidget, NumberedListWidget } from './widgets';
 import { lineContainsSelection, lineIntersectsSelection, rangeContainsSelection } from './selection';
 import type { PendingDecoration } from './types';
 
@@ -47,7 +47,9 @@ function buildLivePreviewDecorations(view: EditorView, hoverLine: number | null)
       const headingMatch = /^(#{1,6})\s+/.exec(lineText);
       const taskMatch = /^(\s*)([-*+])\s+\[([ xX])\]\s+/.exec(lineText);
       const listMatch = /^(\s*)([-*+])\s+/.exec(lineText);
+      const numberedListMatch = /^(\s*)(\d+)([.)])\s+/.exec(lineText);
       const blockquoteMatch = /^(\s*)>\s?/.exec(lineText);
+      const horizontalRuleMatch = /^\s{0,3}([-*_])(?:\s*\1){2,}\s*$/.exec(lineText);
 
       if (codeBlock) {
         const activeCodeBlock = isActiveFencedCodeBlock(view, codeBlock);
@@ -93,6 +95,19 @@ function buildLivePreviewDecorations(view: EditorView, hoverLine: number | null)
         }
       }
 
+      if (horizontalRuleMatch) {
+        if (!isInteractive) {
+          pending.push({
+            from: line.from,
+            to: line.to,
+            decoration: Decoration.replace({ widget: new HorizontalRuleWidget() })
+          });
+        }
+
+        pos = line.to + 1;
+        continue;
+      }
+
       if (taskMatch) {
         const markerStart = line.from + taskMatch[1].length;
         const taskEnd = line.from + taskMatch[0].length;
@@ -117,6 +132,18 @@ function buildLivePreviewDecorations(view: EditorView, hoverLine: number | null)
 
         if (!rangeContainsSelection(view, markerStart, markerEnd)) {
           pending.push({ from: markerStart, to: markerEnd, decoration: bulletMarker });
+        }
+      } else if (numberedListMatch) {
+        const markerStart = line.from + numberedListMatch[1].length;
+        const markerEnd = line.from + numberedListMatch[0].length;
+        const markerText = `${numberedListMatch[2]}${numberedListMatch[3]}`;
+
+        if (!rangeContainsSelection(view, markerStart, markerEnd)) {
+          pending.push({
+            from: markerStart,
+            to: markerEnd,
+            decoration: Decoration.replace({ widget: new NumberedListWidget(markerText) })
+          });
         }
       }
 
