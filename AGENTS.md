@@ -20,6 +20,7 @@ Lithe is a light, local-first Markdown editor. It should feel simple enough for 
 - Keep renderer UI code in `src/renderer/`.
 - Keep Tauri app shell and native commands in `src-tauri/`.
 - Add tests alongside the feature once test infrastructure is introduced.
+- Start commit messages with an English imperative verb and make the scope broad enough to describe the full change.
 
 ## Initial Commands
 

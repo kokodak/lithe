@@ -81,7 +81,11 @@ class CheckboxWidget extends WidgetType {
     checkbox.setAttribute('role', 'checkbox');
     checkbox.setAttribute('aria-checked', String(this.checked));
     checkbox.tabIndex = 0;
-    checkbox.textContent = this.checked ? '✓' : '';
+
+    const box = document.createElement('span');
+    box.className = 'cm-live-checkbox-box';
+    box.textContent = this.checked ? '✓' : '';
+    checkbox.append(box);
 
     const toggle = (event: Event): void => {
       event.preventDefault();
@@ -132,7 +136,7 @@ const hiddenSyntax = Decoration.mark({ class: 'cm-markdown-syntax-hidden' });
 const liveStrong = Decoration.mark({ class: 'cm-live-strong' });
 const liveCode = Decoration.mark({ class: 'cm-live-code' });
 const liveCheckedTask = Decoration.mark({ class: 'cm-live-task-checked' });
-const bulletWidget = Decoration.widget({ widget: new BulletWidget(), side: 1 });
+const bulletMarker = Decoration.replace({ widget: new BulletWidget() });
 const fencedCodeLine = Decoration.line({ class: 'cm-live-codeblock' });
 const fencedCodeFirstLine = Decoration.line({ class: 'cm-live-codeblock cm-live-codeblock-first' });
 const fencedCodeLastLine = Decoration.line({ class: 'cm-live-codeblock cm-live-codeblock-last' });
@@ -268,6 +272,19 @@ function lineIntersectsSelection(view: EditorView, lineFrom: number, lineTo: num
   });
 }
 
+function rangeContainsSelection(view: EditorView, from: number, to: number): boolean {
+  return view.state.selection.ranges.some((range) => {
+    const selectionFrom = Math.min(range.from, range.to);
+    const selectionTo = Math.max(range.from, range.to);
+
+    if (range.empty) {
+      return range.head >= from && range.head < to;
+    }
+
+    return selectionFrom < to && selectionTo > from;
+  });
+}
+
 function addInlinePreviewDecorations(pending: PendingDecoration[], lineFrom: number, lineText: string): void {
   for (const match of lineText.matchAll(/(\*\*|__)(.+?)\1/g)) {
     const marker = match[1];
@@ -364,24 +381,26 @@ function buildLivePreviewDecorations(view: EditorView, hoverLine: number | null)
         const taskEnd = line.from + taskMatch[0].length;
         const checkPosition = markerStart + taskMatch[2].length + 2;
         const isChecked = taskMatch[3].toLowerCase() === 'x';
+        const editingTaskMarker = rangeContainsSelection(view, markerStart, taskEnd);
 
-        pending.push({
-          from: taskEnd,
-          to: taskEnd,
-          decoration: Decoration.widget({
-            widget: new CheckboxWidget(isChecked, checkPosition),
-            side: 1
-          })
-        });
-        pending.push({ from: markerStart, to: taskEnd, decoration: hiddenSyntax });
+        if (!editingTaskMarker) {
+          pending.push({
+            from: markerStart,
+            to: taskEnd,
+            decoration: Decoration.replace({ widget: new CheckboxWidget(isChecked, checkPosition) })
+          });
+        }
 
         if (isChecked) {
           pending.push({ from: taskEnd, to: line.to, decoration: liveCheckedTask });
         }
       } else if (listMatch) {
         const markerStart = line.from + listMatch[1].length;
-        pending.push({ from: markerStart, to: line.from + listMatch[0].length, decoration: hiddenSyntax });
-        pending.push({ from: line.from + listMatch[0].length, to: line.from + listMatch[0].length, decoration: bulletWidget });
+        const markerEnd = line.from + listMatch[0].length;
+
+        if (!rangeContainsSelection(view, markerStart, markerEnd)) {
+          pending.push({ from: markerStart, to: markerEnd, decoration: bulletMarker });
+        }
       }
 
       if (blockquoteMatch) {
