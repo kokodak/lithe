@@ -19,6 +19,8 @@ npm install
 npm run dev
 ```
 
+For local desktop builds, see [Tauri Build](docs/tauri-build.md).
+
 ## Project Layout
 
 ```text
