@@ -171,22 +171,24 @@ button {
 #editor .cm-live-checkbox {
   display: inline-flex;
   width: 2em;
+  height: 1.65em;
   align-items: center;
+  justify-content: flex-start;
   color: #fffefa;
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-  font-size: 0.86em;
-  font-weight: 700;
   line-height: 1;
   cursor: pointer;
 }
 
 #editor .cm-live-checkbox-box {
-  display: inline-grid;
+  position: relative;
+  box-sizing: border-box;
+  display: inline-block;
+  flex: 0 0 1.2em;
   width: 1.2em;
   height: 1.2em;
-  place-items: center;
   transform: translateY(0.18em);
   border: 1px solid #b9aea1;
   border-radius: 4px;
@@ -196,6 +198,18 @@ button {
 #editor .cm-live-checkbox.is-checked .cm-live-checkbox-box {
   border-color: #2f5f62;
   background: #2f5f62;
+}
+
+#editor .cm-live-checkbox.is-checked .cm-live-checkbox-box::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.38em;
+  height: 0.66em;
+  transform: translate(-50%, -58%) rotate(45deg);
+  border-right: 2px solid #fffefa;
+  border-bottom: 2px solid #fffefa;
+  content: "";
 }
 
 #editor .cm-live-task-checked {

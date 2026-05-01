@@ -124,7 +124,6 @@ export class CheckboxWidget extends WidgetType {
 
     const box = document.createElement('span');
     box.className = 'cm-live-checkbox-box';
-    box.textContent = this.checked ? '✓' : '';
     checkbox.append(box);
 
     const toggle = (event: Event): void => {
