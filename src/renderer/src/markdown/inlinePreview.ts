@@ -7,6 +7,12 @@ import { ImageWidget, LinkWidget } from './widgets';
 interface InlineSyntaxRange {
   from: number;
   to: number;
+  markers: InlineSyntaxMarker[];
+}
+
+interface InlineSyntaxMarker {
+  from: number;
+  to: number;
 }
 
 function rangeTouchesSelection(view: EditorView, from: number, to: number): boolean {
@@ -50,6 +56,38 @@ function rangeIsActive(range: InlineSyntaxRange, activeRanges: InlineSyntaxRange
   return activeRanges.includes(range);
 }
 
+function addStyledContentDecoration(
+  pending: PendingDecoration[],
+  from: number,
+  to: number,
+  decoration: Decoration,
+  syntaxRanges: InlineSyntaxRange[],
+  activeRanges: InlineSyntaxRange[]
+): void {
+  const hiddenMarkers = syntaxRanges
+    .filter((range) => !rangeIsActive(range, activeRanges))
+    .flatMap((range) => range.markers)
+    .filter((marker) => marker.from < to && marker.to > from)
+    .sort((first, second) => first.from - second.from || first.to - second.to);
+
+  let segmentFrom = from;
+
+  for (const marker of hiddenMarkers) {
+    const markerFrom = Math.max(marker.from, from);
+    const markerTo = Math.min(marker.to, to);
+
+    if (segmentFrom < markerFrom) {
+      pending.push({ from: segmentFrom, to: markerFrom, decoration });
+    }
+
+    segmentFrom = Math.max(segmentFrom, markerTo);
+  }
+
+  if (segmentFrom < to) {
+    pending.push({ from: segmentFrom, to, decoration });
+  }
+}
+
 export function addInlinePreviewDecorations(
   view: EditorView,
   pending: PendingDecoration[],
@@ -60,40 +98,91 @@ export function addInlinePreviewDecorations(
 
   for (const match of lineText.matchAll(/(\*\*|__)(.+?)\1/g)) {
     const matchStart = match.index ?? 0;
-    syntaxRanges.push({ from: lineFrom + matchStart, to: lineFrom + matchStart + match[0].length });
+    const contentStart = matchStart + match[1].length;
+    const contentEnd = matchStart + match[0].length - match[1].length;
+    syntaxRanges.push({
+      from: lineFrom + matchStart,
+      to: lineFrom + matchStart + match[0].length,
+      markers: [
+        { from: lineFrom + matchStart, to: lineFrom + contentStart },
+        { from: lineFrom + contentEnd, to: lineFrom + matchStart + match[0].length }
+      ]
+    });
   }
 
   for (const match of lineText.matchAll(/`([^`]+?)`/g)) {
     const matchStart = match.index ?? 0;
-    syntaxRanges.push({ from: lineFrom + matchStart, to: lineFrom + matchStart + match[0].length });
+    syntaxRanges.push({
+      from: lineFrom + matchStart,
+      to: lineFrom + matchStart + match[0].length,
+      markers: [
+        { from: lineFrom + matchStart, to: lineFrom + matchStart + 1 },
+        { from: lineFrom + matchStart + match[0].length - 1, to: lineFrom + matchStart + match[0].length }
+      ]
+    });
   }
 
   for (const match of lineText.matchAll(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
     const matchStart = match.index ?? 0;
-    syntaxRanges.push({ from: lineFrom + matchStart, to: lineFrom + matchStart + match[0].length });
+    syntaxRanges.push({
+      from: lineFrom + matchStart,
+      to: lineFrom + matchStart + match[0].length,
+      markers: [{ from: lineFrom + matchStart, to: lineFrom + matchStart + match[0].length }]
+    });
   }
 
   for (const match of lineText.matchAll(/~~(.+?)~~/g)) {
     const matchStart = match.index ?? 0;
-    syntaxRanges.push({ from: lineFrom + matchStart, to: lineFrom + matchStart + match[0].length });
+    syntaxRanges.push({
+      from: lineFrom + matchStart,
+      to: lineFrom + matchStart + match[0].length,
+      markers: [
+        { from: lineFrom + matchStart, to: lineFrom + matchStart + 2 },
+        { from: lineFrom + matchStart + match[0].length - 2, to: lineFrom + matchStart + match[0].length }
+      ]
+    });
   }
 
   for (const match of lineText.matchAll(/(^|[^\*])\*([^\s*][^*]*?[^\s*]|\S)\*(?!\*)/g)) {
     const prefix = match[1];
     const matchStart = (match.index ?? 0) + prefix.length;
-    syntaxRanges.push({ from: lineFrom + matchStart, to: lineFrom + matchStart + match[0].length - prefix.length });
+    syntaxRanges.push({
+      from: lineFrom + matchStart,
+      to: lineFrom + matchStart + match[0].length - prefix.length,
+      markers: [
+        { from: lineFrom + matchStart, to: lineFrom + matchStart + 1 },
+        {
+          from: lineFrom + matchStart + match[0].length - prefix.length - 1,
+          to: lineFrom + matchStart + match[0].length - prefix.length
+        }
+      ]
+    });
   }
 
   for (const match of lineText.matchAll(/(^|[^_])_([^\s_][^_]*?[^\s_]|\S)_(?!_)/g)) {
     const prefix = match[1];
     const matchStart = (match.index ?? 0) + prefix.length;
-    syntaxRanges.push({ from: lineFrom + matchStart, to: lineFrom + matchStart + match[0].length - prefix.length });
+    syntaxRanges.push({
+      from: lineFrom + matchStart,
+      to: lineFrom + matchStart + match[0].length - prefix.length,
+      markers: [
+        { from: lineFrom + matchStart, to: lineFrom + matchStart + 1 },
+        {
+          from: lineFrom + matchStart + match[0].length - prefix.length - 1,
+          to: lineFrom + matchStart + match[0].length - prefix.length
+        }
+      ]
+    });
   }
 
   for (const match of lineText.matchAll(/(^|[^!])\[([^\]]+)\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g)) {
     const prefix = match[1];
     const matchStart = (match.index ?? 0) + prefix.length;
-    syntaxRanges.push({ from: lineFrom + matchStart, to: lineFrom + matchStart + match[0].length - prefix.length });
+    syntaxRanges.push({
+      from: lineFrom + matchStart,
+      to: lineFrom + matchStart + match[0].length - prefix.length,
+      markers: [{ from: lineFrom + matchStart, to: lineFrom + matchStart + match[0].length - prefix.length }]
+    });
   }
 
   const activeRanges = getActiveInlineRanges(view, syntaxRanges);
@@ -114,7 +203,14 @@ export function addInlinePreviewDecorations(
       pending.push({ from: openingFrom, to: openingTo, decoration: hiddenSyntax });
     }
 
-    pending.push({ from: lineFrom + contentStart, to: lineFrom + contentEnd, decoration: liveStrong });
+    addStyledContentDecoration(
+      pending,
+      lineFrom + contentStart,
+      lineFrom + contentEnd,
+      liveStrong,
+      syntaxRanges,
+      activeRanges
+    );
 
     if (!activeStrong) {
       pending.push({ from: closingFrom, to: closingTo, decoration: hiddenSyntax });
@@ -180,7 +276,14 @@ export function addInlinePreviewDecorations(
       pending.push({ from: openingFrom, to: openingTo, decoration: hiddenSyntax });
     }
 
-    pending.push({ from: lineFrom + contentStart, to: lineFrom + contentEnd, decoration: liveStrikethrough });
+    addStyledContentDecoration(
+      pending,
+      lineFrom + contentStart,
+      lineFrom + contentEnd,
+      liveStrikethrough,
+      syntaxRanges,
+      activeRanges
+    );
 
     if (!activeStrike) {
       pending.push({ from: closingFrom, to: closingTo, decoration: hiddenSyntax });
@@ -205,7 +308,14 @@ export function addInlinePreviewDecorations(
       pending.push({ from: openingFrom, to: openingTo, decoration: hiddenSyntax });
     }
 
-    pending.push({ from: lineFrom + contentStart, to: lineFrom + contentEnd, decoration: liveEmphasis });
+    addStyledContentDecoration(
+      pending,
+      lineFrom + contentStart,
+      lineFrom + contentEnd,
+      liveEmphasis,
+      syntaxRanges,
+      activeRanges
+    );
 
     if (!activeEmphasis) {
       pending.push({ from: closingFrom, to: closingTo, decoration: hiddenSyntax });
@@ -230,7 +340,14 @@ export function addInlinePreviewDecorations(
       pending.push({ from: openingFrom, to: openingTo, decoration: hiddenSyntax });
     }
 
-    pending.push({ from: lineFrom + contentStart, to: lineFrom + contentEnd, decoration: liveEmphasis });
+    addStyledContentDecoration(
+      pending,
+      lineFrom + contentStart,
+      lineFrom + contentEnd,
+      liveEmphasis,
+      syntaxRanges,
+      activeRanges
+    );
 
     if (!activeEmphasis) {
       pending.push({ from: closingFrom, to: closingTo, decoration: hiddenSyntax });
