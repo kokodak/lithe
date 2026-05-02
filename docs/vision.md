@@ -4,7 +4,7 @@ Lithe is a light, local-first Markdown text editor.
 
 It should inherit the simplicity of Apple Notes: a quiet writing surface, no ceremony before typing, and a model that makes ordinary notes feel safe and close at hand.
 
-It should also offer an extension model inspired by tools like Obsidian, where users can add workflows without making the core app heavy for everyone else.
+It should also offer an extension model where users can add workflows without making the core app heavy for everyone else.
 
 ## Goals
 

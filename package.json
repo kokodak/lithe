@@ -28,7 +28,8 @@
     "@codemirror/language-data": "^6.5.2",
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.41.1",
-    "@tauri-apps/api": "^2.0.0"
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/plugin-dialog": "^2.7.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0",

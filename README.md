@@ -21,6 +21,8 @@ npm run dev
 
 For local desktop builds, see [Tauri Build](docs/tauri-build.md).
 
+For local file storage notes, see [Storage](docs/storage.md).
+
 ## Project Layout
 
 ```text

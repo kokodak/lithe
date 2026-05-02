@@ -12,6 +12,7 @@ import { liveMarkdownPreview } from '../markdown/livePreview';
 interface CreateEditorOptions {
   parent: HTMLElement;
   initialText: string;
+  initialSelection?: number;
   onChange: (text: string) => void;
   onCursorChange: (view: EditorView) => void;
 }
@@ -21,6 +22,7 @@ export function createEditor(options: CreateEditorOptions): EditorView {
     parent: options.parent,
     state: EditorState.create({
       doc: options.initialText,
+      selection: { anchor: options.initialSelection ?? 0 },
       extensions: [
         history(),
         markdown({ codeLanguages: languages }),
